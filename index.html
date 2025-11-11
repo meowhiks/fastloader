@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Быстрый запуск программ</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <div class="title-bar">
+      <div class="title-bar-text">Быстрый запуск программ</div>
+      <div class="title-bar-controls">
+        <button id="close-btn" class="control-btn"><i class="fas fa-times"></i></button>
+        <button id="minimize-btn" class="control-btn"><i class="fas fa-minus"></i></button>
+        <button id="maximize-btn" class="control-btn"><i class="fas fa-plus"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="sidebar">
+        <div class="logo">
+          <i class="fas fa-rocket"></i>
+          <span>FastLoader</span>
+        </div>
+        <nav class="nav-menu">
+          <a href="#" class="nav-item active" data-view="launcher">
+            <i class="fas fa-th-large"></i>
+            <span>Приложения</span>
+          </a>
+          <a href="#" class="nav-item" data-view="categories">
+            <i class="fas fa-folder"></i>
+            <span>Категории</span>
+          </a>
+          <a href="#" class="nav-item" data-view="settings">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+          </a>
+          <a href="#" class="nav-item" data-view="about">
+            <i class="fas fa-info-circle"></i>
+            <span>О программе</span>
+          </a>
+        </nav>
+        <div class="sidebar-footer">
+          <button id="add-program-sidebar-btn" class="add-btn">
+            <i class="fas fa-plus"></i>
+            <span>Добавить программу</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        
+        <div id="launcher-view" class="view active">
+          <div class="search-container">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="search-input" placeholder="Поиск программ...">
+            </div>
+            <div class="category-filter">
+              <select id="category-filter">
+                <option value="all">Все категории</option>
+                
+              </select>
+            </div>
+          </div>
+          
+          <div class="launcher-grid" id="launcher-grid">
+            
+          </div>
+          
+          <div class="floating-action-btn" id="add-program-btn">
+            <i class="fas fa-plus"></i>
+          </div>
+        </div>
+        
+        
+        <div id="categories-view" class="view">
+          <h2>Управление категориями</h2>
+          <div class="categories-container">
+            <div class="categories-list" id="categories-list">
+              
+            </div>
+            <div class="add-category-form">
+              <h3>Добавить категорию</h3>
+              <div class="form-group">
+                <label for="category-name">Название категории</label>
+                <input type="text" id="category-name" placeholder="Например: Игры">
+              </div>
+              <div class="form-group">
+                <label for="category-icon">Иконка категории</label>
+                <div class="icon-selection">
+                  <div class="icon-preview" id="category-icon-preview">
+                    <i class="fas fa-folder"></i>
+                  </div>
+                  <div class="icon-options">
+                    <button id="select-category-icon" class="btn btn-secondary">Выбрать иконку</button>
+                  </div>
+                </div>
+              </div>
+              <button id="add-category-btn" class="btn btn-primary">Добавить категорию</button>
+            </div>
+          </div>
+        </div>
+        
+        
+        <div id="settings-view" class="view">
+          <h2>Настройки</h2>
+          <div class="settings-container">
+            <div class="setting-group">
+              <h3>Внешний вид</h3>
+              <div class="theme-selector">
+                <div class="theme-option" data-theme="light">
+                  <div class="theme-preview light-theme"></div>
+                  <span>Светлая</span>
+                </div>
+                <div class="theme-option" data-theme="dark">
+                  <div class="theme-preview dark-theme"></div>
+                  <span>Тёмная</span>
+                </div>
+                <div class="theme-option" data-theme="black">
+                  <div class="theme-preview black-theme"></div>
+                  <span>Чёрная</span>
+                </div>
+                <div class="theme-option" data-theme="system">
+                  <div class="theme-preview system-theme"></div>
+                  <span>Системная</span>
+                </div>
+              </div>
+              <div class="setting-item">
+                <label for="opacity-range">Прозрачность окна</label>
+                <input type="range" id="opacity-range" min="70" max="100" value="95">
+                <span id="opacity-value">95%</span>
+              </div>
+              <div class="setting-item">
+                <label for="app-size-select">Размер отображения приложений</label>
+                <select id="app-size-select">
+                  <option value="small">Маленький</option>
+                  <option value="medium" selected>Средний</option>
+                  <option value="large">Большой</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-group">
+              <h3>Поведение</h3>
+              <div class="setting-item checkbox">
+                <div class="custom-checkbox" id="startup-checkbox"></div>
+                <label for="startup-checkbox">Запускать при старте системы</label>
+              </div>
+              <div class="setting-item checkbox">
+                <div class="custom-checkbox" id="minimize-checkbox"></div>
+                <label for="minimize-checkbox">Сворачивать в трей при закрытии</label>
+              </div>
+              <div class="setting-item checkbox">
+                <div class="custom-checkbox" id="start-minimized-checkbox"></div>
+                <label for="start-minimized-checkbox">Запускать свернутым в трей</label>
+              </div>
+              <div class="setting-item checkbox">
+                <div class="custom-checkbox" id="enable-mini-app-checkbox"></div>
+                <label for="enable-mini-app-checkbox">Включить мини-приложение (появляется при наведении мыши в верхний правый угол экрана)</label>
+              </div>
+            </div>
+            <div class="setting-actions">
+              <button id="exit-app-btn" class="btn btn-secondary">Выйти из приложения</button>
+            </div>
+          </div>
+        </div>
+        
+        
+        <div id="about-view" class="view">
+          <div class="about-container">
+            <div class="about-logo">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <h2>FastLoader</h2>
+            <p class="version">Версия 1.0.0</p>
+            <p class="description">Красивый и быстрый запуск программ на базе Electron.</p>
+            <p class="author">Автор: meowhiks</p>
+            <p class="copyright">© 2025 FastLoader</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+  <div id="add-program-modal" class="modal">
+    <div class="modal-content animate__animated animate__fadeInDown">
+      <div class="modal-header">
+        <h2>Добавить программу</h2>
+        <button class="close-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="program-name">Название программы</label>
+          <input type="text" id="program-name" placeholder="Например: Chrome">
+        </div>
+        <div class="form-group">
+          <label for="program-path">Путь к программе</label>
+          <div class="path-input-container">
+            <input type="text" id="program-path" placeholder="Например: C:\Program Files\Google\Chrome\Application\chrome.exe">
+            <button id="browse-btn" class="browse-btn"><i class="fas fa-folder-open"></i></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Иконка программы</label>
+          <div class="icon-selection">
+            <div class="icon-preview" id="icon-preview">
+              <i class="fas fa-desktop"></i>
+            </div>
+            <div class="icon-options">
+              <button id="use-default-icon" class="icon-btn active">По умолчанию</button>
+              <button id="use-extracted-icon" class="icon-btn" disabled>Извлеченная</button>
+              <button id="choose-custom-icon" class="icon-btn">Выбрать свою</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="program-category">Категория</label>
+          <select id="program-category">
+            <option value="all">Без категории</option>
+            
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-add-btn" class="btn btn-secondary">Отмена</button>
+        <button id="save-program-btn" class="btn btn-primary">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="edit-program-modal" class="modal">
+    <div class="modal-content animate__animated animate__fadeInDown">
+      <div class="modal-header">
+        <h2>Редактировать программу</h2>
+        <button class="close-modal" id="close-edit-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-program-name">Название программы</label>
+          <input type="text" id="edit-program-name" placeholder="Например: Chrome">
+        </div>
+        <div class="form-group">
+          <label for="edit-program-path">Путь к программе</label>
+          <div class="path-input-container">
+            <input type="text" id="edit-program-path" placeholder="Например: C:\Program Files\Google\Chrome\Application\chrome.exe">
+            <button id="edit-browse-btn" class="browse-btn"><i class="fas fa-folder-open"></i></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Иконка программы</label>
+          <div class="icon-selection">
+            <div class="icon-preview" id="edit-icon-preview">
+              <i class="fas fa-desktop"></i>
+            </div>
+            <div class="icon-options">
+              <button id="edit-use-default-icon" class="icon-btn active">По умолчанию</button>
+              <button id="edit-use-extracted-icon" class="icon-btn" disabled>Извлеченная</button>
+              <button id="edit-choose-custom-icon" class="icon-btn">Выбрать свою</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-program-category">Категория</label>
+          <select id="edit-program-category">
+            <option value="all">Без категории</option>
+            
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-edit-btn" class="btn btn-secondary">Отмена</button>
+        <button id="save-edit-btn" class="btn btn-primary">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="icon-selection-modal" class="modal">
+    <div class="modal-content animate__animated animate__fadeInDown">
+      <div class="modal-header">
+        <h2>Выбор иконки</h2>
+        <button class="close-modal" id="close-icon-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="icon-grid" id="icon-grid">
+          
+          <div class="icon-item" data-icon="fa-home"><i class="fas fa-home"></i></div>
+          <div class="icon-item" data-icon="fa-gamepad"><i class="fas fa-gamepad"></i></div>
+          <div class="icon-item" data-icon="fa-code"><i class="fas fa-code"></i></div>
+          <div class="icon-item" data-icon="fa-briefcase"><i class="fas fa-briefcase"></i></div>
+          <div class="icon-item" data-icon="fa-tools"><i class="fas fa-tools"></i></div>
+          <div class="icon-item" data-icon="fa-desktop"><i class="fas fa-desktop"></i></div>
+          <div class="icon-item" data-icon="fa-folder"><i class="fas fa-folder"></i></div>
+          <div class="icon-item" data-icon="fa-file"><i class="fas fa-file"></i></div>
+          <div class="icon-item" data-icon="fa-image"><i class="fas fa-image"></i></div>
+          <div class="icon-item" data-icon="fa-video"><i class="fas fa-video"></i></div>
+          <div class="icon-item" data-icon="fa-music"><i class="fas fa-music"></i></div>
+          <div class="icon-item" data-icon="fa-film"><i class="fas fa-film"></i></div>
+          <div class="icon-item" data-icon="fa-book"><i class="fas fa-book"></i></div>
+          <div class="icon-item" data-icon="fa-bookmark"><i class="fas fa-bookmark"></i></div>
+          <div class="icon-item" data-icon="fa-shopping-cart"><i class="fas fa-shopping-cart"></i></div>
+          <div class="icon-item" data-icon="fa-heart"><i class="fas fa-heart"></i></div>
+          <div class="icon-item" data-icon="fa-star"><i class="fas fa-star"></i></div>
+          <div class="icon-item" data-icon="fa-user"><i class="fas fa-user"></i></div>
+          <div class="icon-item" data-icon="fa-users"><i class="fas fa-users"></i></div>
+          <div class="icon-item" data-icon="fa-cog"><i class="fas fa-cog"></i></div>
+          <div class="icon-item" data-icon="fa-wrench"><i class="fas fa-wrench"></i></div>
+          <div class="icon-item" data-icon="fa-chart-bar"><i class="fas fa-chart-bar"></i></div>
+          <div class="icon-item" data-icon="fa-database"><i class="fas fa-database"></i></div>
+          <div class="icon-item" data-icon="fa-server"><i class="fas fa-server"></i></div>
+          <div class="icon-item" data-icon="fa-globe"><i class="fas fa-globe"></i></div>
+          <div class="icon-item" data-icon="fa-envelope"><i class="fas fa-envelope"></i></div>
+          <div class="icon-item" data-icon="fa-comment"><i class="fas fa-comment"></i></div>
+          <div class="icon-item" data-icon="fa-calendar"><i class="fas fa-calendar"></i></div>
+          <div class="icon-item" data-icon="fa-clock"><i class="fas fa-clock"></i></div>
+          <div class="icon-item" data-icon="fa-camera"><i class="fas fa-camera"></i></div>
+        </div>
+        <div class="custom-icon-upload">
+          <button id="upload-custom-icon" class="btn btn-secondary">Загрузить свою иконку</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-icon-btn" class="btn btn-secondary">Отмена</button>
+        <button id="select-icon-btn" class="btn btn-primary">Выбрать</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="context-menu" class="context-menu" style="display: none;">
+    <div class="context-menu-item" id="context-edit">
+      <i class="fas fa-edit"></i>
+      <span>Редактировать</span>
+    </div>
+    <div class="context-menu-item" id="context-delete">
+      <i class="fas fa-trash-alt"></i>
+      <span>Удалить</span>
+    </div>
+    <div class="context-menu-separator"></div>
+    <div class="context-menu-item" id="context-run">
+      <i class="fas fa-play"></i>
+      <span>Запустить</span>
+    </div>
+  </div>
+
+  
+  <div id="update-modal" class="modal">
+    <div class="modal-content animate__animated animate__fadeInDown">
+      <div class="modal-header">
+        <h2>Обновление доступно</h2>
+        <button class="close-modal" id="close-update-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="update-content">
+          <div id="update-checking" style="display: none;">
+            <p><i class="fas fa-spinner fa-spin"></i> Проверка обновлений...</p>
+          </div>
+          <div id="update-available" style="display: none;">
+            <p><strong>Доступна новая версия:</strong> <span id="update-version"></span></p>
+            <div id="update-release-notes" style="margin-top: 10px; max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 4px;"></div>
+            <div id="update-progress-container" style="display: none; margin-top: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Загрузка обновления...</span>
+                <span id="update-progress-percent">0%</span>
+              </div>
+              <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;">
+                <div id="update-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); transition: width 0.3s;"></div>
+              </div>
+            </div>
+            <div id="update-downloaded" style="display: none; margin-top: 15px; padding: 10px; background: rgba(40, 167, 69, 0.1); border-radius: 4px;">
+              <p><i class="fas fa-check-circle" style="color: #28a745;"></i> Обновление загружено и готово к установке!</p>
+            </div>
+          </div>
+          <div id="update-not-available" style="display: none;">
+            <p><i class="fas fa-check-circle" style="color: #28a745;"></i> У вас установлена последняя версия приложения.</p>
+          </div>
+          <div id="update-error" style="display: none;">
+            <p><i class="fas fa-exclamation-circle" style="color: #dc3545;"></i> <span id="update-error-message"></span></p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-update-btn" class="btn btn-secondary">Закрыть</button>
+        <button id="download-update-btn" class="btn btn-primary" style="display: none;">Загрузить обновление</button>
+        <button id="install-update-btn" class="btn btn-primary" style="display: none;">Установить и перезапустить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,49 @@
+{
+  "name": "fast-loader",
+  "version": "1.0.0",
+  "description": "Быстрый запуск программ на базе Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": "meowhiks",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.6.3"
+  },
+  "dependencies": {
+    "extract-file-icon": "^0.3.2",
+    "electron-updater": "^6.1.4"
+  },
+  "build": {
+    "appId": "com.fastloader.app",
+    "productName": "FastLoader",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "meowhiks",
+      "repo": "fastloader"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
+
