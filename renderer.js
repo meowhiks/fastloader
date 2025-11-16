@@ -53,7 +53,6 @@ const appSizeSelect = document.getElementById("app-size-select")
 const startupCheckbox = document.getElementById("startup-checkbox")
 const minimizeCheckbox = document.getElementById("minimize-checkbox")
 const startMinimizedCheckbox = document.getElementById("start-minimized-checkbox")
-const enableMiniAppCheckbox = document.getElementById("enable-mini-app-checkbox")
 const exitAppBtn = document.getElementById("exit-app-btn")
 const contextMenu = document.getElementById("context-menu")
 const contextEdit = document.getElementById("context-edit")
@@ -131,14 +130,9 @@ async function loadSettings() {
       launchOnStartup: false,
       minimizeToTray: false,
       startMinimized: false,
-      enableMiniApp: true,
     }
   } else {
     settings = loadedSettings
-
-    if (settings.enableMiniApp === undefined) {
-      settings.enableMiniApp = true
-    }
     if (settings.appSize === undefined) {
       settings.appSize = "medium"
     }
@@ -219,22 +213,9 @@ function applySettings() {
     startMinimizedCheckbox.classList.remove("checked")
   }
 
-  if (settings.enableMiniApp) {
-    enableMiniAppCheckbox.classList.add("checked")
-  } else {
-    enableMiniAppCheckbox.classList.remove("checked")
-  }
-
 
   if (settings.minimizeToTray) {
     window.electronAPI.createTray()
-  }
-
-
-  if (settings.enableMiniApp) {
-    window.electronAPI.enableMiniApp()
-  } else {
-    window.electronAPI.disableMiniApp()
   }
 }
 
@@ -1245,10 +1226,6 @@ startMinimizedCheckbox.addEventListener("click", () => {
   toggleCheckbox(startMinimizedCheckbox, "startMinimized")
 })
 
-enableMiniAppCheckbox.addEventListener("click", () => {
-  toggleCheckbox(enableMiniAppCheckbox, "enableMiniApp")
-})
-
 
 
 themeOptions.forEach((option) => {
@@ -1437,20 +1414,19 @@ function showUpdateStatus(status, data = {}) {
       break
     case "not-available":
       document.getElementById("update-not-available").style.display = "block"
-      showUpdateModal()
       break
     case "error":
       document.getElementById("update-error").style.display = "block"
       if (data.message) {
         document.getElementById("update-error-message").textContent = data.message
       }
-      showUpdateModal()
       break
     case "downloaded":
       document.getElementById("update-downloaded").style.display = "block"
       document.getElementById("update-progress-container").style.display = "none"
       if (installUpdateBtn) installUpdateBtn.style.display = "inline-block"
       if (downloadUpdateBtn) downloadUpdateBtn.style.display = "none"
+      showUpdateModal()
       break
   }
 }
@@ -1478,10 +1454,12 @@ async function checkForUpdates() {
     const result = await window.electronAPI.checkForUpdates()
     if (!result.success) {
       showUpdateStatus("error", { message: result.message || "Ошибка при проверке обновлений" })
+      showUpdateModal()
     }
   } catch (error) {
     console.error("Error checking for updates:", error)
     showUpdateStatus("error", { message: error.message || "Ошибка при проверке обновлений" })
+    showUpdateModal()
   }
 }
 
@@ -1554,8 +1532,17 @@ async function addUpdateCheckButton() {
 }
 
 
+if (window.electronAPI && window.electronAPI.onProgramLaunched) {
+  window.electronAPI.onProgramLaunched((data) => {
+    if (data && data.programId) {
+      trackProgramUsage(data.programId)
+    }
+  })
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initialize()
   addUpdateCheckButton()
+  saveProgramsToFile()
 })
 

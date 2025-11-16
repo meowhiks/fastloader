@@ -11,6 +11,19 @@ let mainWindow
 let tray = null
 let forceQuit = false
 
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  app.quit()
+  process.exit(0)
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      showWindow()
+    }
+  })
+}
+
 
 let mouseTrackingInterval = null
 let isMouseInCorner = false
@@ -41,7 +54,6 @@ function loadSettings() {
     launchOnStartup: false,
     minimizeToTray: false,
     startMinimized: false,
-    enableMiniApp: true,
   }
 
 
@@ -71,7 +83,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, "assets", "icon.png"),
+    icon: path.join(__dirname, "assets", "icon.ico"),
     show: false,
   })
 
@@ -104,44 +116,181 @@ function createWindow() {
 
   })
 
+  mainWindow.on("minimize", (event) => {
+    const currentSettings = loadSettings()
+    if (!forceQuit && currentSettings.minimizeToTray) {
+      event.preventDefault()
+      mainWindow.hide()
+    }
+  })
+
 
 
 }
 
 
+function showWindow() {
+  if (!mainWindow) return
+  
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+  
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.workAreaSize
+  const windowWidth = 900
+  const windowHeight = 700
+  const x = Math.floor((width - windowWidth) / 2) + primaryDisplay.workArea.x
+  const y = Math.floor((height - windowHeight) / 2) + primaryDisplay.workArea.y
+  
+  mainWindow.setBounds({ x, y, width: windowWidth, height: windowHeight })
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+function getFrequentlyUsedPrograms() {
+  try {
+    const programsDataPath = path.join(app.getPath("userData"), "programs.json")
+    if (fs.existsSync(programsDataPath)) {
+      const data = JSON.parse(fs.readFileSync(programsDataPath, "utf8"))
+      const programs = data.programs || []
+      const usageStats = data.usageStats || {}
+      
+      const programsWithUsage = programs.map(program => ({
+        ...program,
+        usageCount: usageStats[program.id] || 0,
+        lastUsed: usageStats[`${program.id}_lastUsed`] || 0
+      }))
+      
+      return programsWithUsage
+        .filter(p => p.usageCount > 0)
+        .sort((a, b) => {
+          if (b.usageCount !== a.usageCount) {
+            return b.usageCount - a.usageCount
+          }
+          return b.lastUsed - a.lastUsed
+        })
+        .slice(0, 10)
+    }
+  } catch (error) {
+    console.error("Error loading frequently used programs:", error)
+  }
+  return []
+}
+
 function createTray() {
-
-  if (tray) return
-
+  if (tray) {
+    updateTrayMenu()
+    return
+  }
 
   const iconPath = path.join(__dirname, "assets", "icon.png")
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
   tray = new Tray(trayIcon)
 
-  const contextMenu = Menu.buildFromTemplate([
+  updateTrayMenu()
+
+  tray.setToolTip("FastLoader")
+
+  tray.on("double-click", () => {
+    showWindow()
+  })
+}
+
+function updateTrayMenu() {
+  if (!tray) return
+  
+  const frequentlyUsed = getFrequentlyUsedPrograms()
+  const menuItems = [
     {
       label: "Открыть FastLoader",
       click: () => {
-        mainWindow.show()
+        showWindow()
       },
     },
-    { type: "separator" },
+    { type: "separator" }
+  ]
+
+  if (frequentlyUsed.length > 0) {
+    menuItems.push({ type: "separator" })
+    menuItems.push({
+      label: "Часто используемые программы",
+      enabled: false
+    })
+    
+    frequentlyUsed.forEach((program, index) => {
+      menuItems.push({
+        label: program.name,
+        click: async () => {
+          try {
+            await launchProgramFromTray(program.path)
+          } catch (error) {
+            console.error("Error launching program from tray:", error)
+          }
+        }
+      })
+    })
+    menuItems.push({ type: "separator" })
+  }
+
+  menuItems.push(
     {
       label: "Выход",
       click: () => {
         forceQuit = true
         app.quit()
       },
-    },
-  ])
+    }
+  )
 
-  tray.setToolTip("FastLoader")
+  const contextMenu = Menu.buildFromTemplate(menuItems)
   tray.setContextMenu(contextMenu)
+}
 
+async function launchProgramFromTray(programPath) {
+  try {
+    if (!fs.existsSync(programPath)) {
+      return { success: false, error: "Файл не существует" }
+    }
 
-  tray.on("double-click", () => {
-    mainWindow.show()
-  })
+    if (process.platform === "win32") {
+      const ext = path.extname(programPath).toLowerCase()
+      if (ext === ".py") {
+        const pythonPath = "python"
+        const childProcess = exec(`"${pythonPath}" "${programPath}"`, { 
+          detached: true, 
+          stdio: "ignore",
+          windowsHide: true
+        }, (error) => {
+          if (error) {
+            console.error(`Error launching Python script: ${error}`)
+          }
+        })
+        childProcess.unref()
+        return { success: true }
+      } else {
+        shell.openPath(programPath).catch((error) => {
+          console.error(`Error launching program: ${error}`)
+        })
+        return { success: true }
+      }
+    } else {
+      const childProcess = exec(`"${programPath}"`, { 
+        detached: true, 
+        stdio: "ignore",
+        windowsHide: true
+      }, (error) => {
+        if (error) {
+          console.error(`Error launching program: ${error}`)
+        }
+      })
+      childProcess.unref()
+      return { success: true }
+    }
+  } catch (error) {
+    console.error(`Exception launching program: ${error}`)
+    return { success: false, error: error.message }
+  }
 }
 
 
@@ -299,9 +448,6 @@ app.whenReady().then(() => {
   createWindow()
   
 
-  startGlobalMouseTracking()
-
-
   setTimeout(() => {
     if (!app.isPackaged) {
       console.log("Skipping update check in development mode")
@@ -330,33 +476,112 @@ app.on("before-quit", () => {
 })
 
 
-ipcMain.handle("launch-program", async (event, programPath) => {
+ipcMain.handle("launch-program", async (event, programPath, programId) => {
   try {
-
     if (!fs.existsSync(programPath)) {
       return { success: false, error: "Файл не существует" }
     }
 
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(true)
+    }
 
     if (process.platform === "win32") {
-
-      const result = await shell.openPath(programPath)
-      if (result !== "") {
-        return { success: false, error: result }
+      const ext = path.extname(programPath).toLowerCase()
+      if (ext === ".py") {
+        const pythonPath = "python"
+        const childProcess = exec(`"${pythonPath}" "${programPath}"`, { 
+          detached: true, 
+          stdio: "ignore",
+          windowsHide: true
+        }, (error) => {
+          if (error) {
+            console.error(`Error launching Python script: ${error}`)
+          }
+        })
+        childProcess.unref()
+        
+        setTimeout(() => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.setAlwaysOnTop(false)
+            if (mainWindow.isMinimized()) {
+              mainWindow.restore()
+            }
+            mainWindow.focus()
+          }
+        }, 200)
+        
+        if (programId && mainWindow) {
+          mainWindow.webContents.send("program-launched", { programId })
+        }
+        return { success: true }
+      } else {
+        shell.openPath(programPath).then((result) => {
+          setTimeout(() => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.setAlwaysOnTop(false)
+              if (mainWindow.isMinimized()) {
+                mainWindow.restore()
+              }
+              mainWindow.focus()
+            }
+          }, 200)
+          
+          if (result !== "") {
+            console.error(`Error launching program: ${result}`)
+          }
+        }).catch((error) => {
+          console.error(`Error launching program: ${error}`)
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.setAlwaysOnTop(false)
+            if (mainWindow.isMinimized()) {
+              mainWindow.restore()
+            }
+            mainWindow.focus()
+          }
+        })
+        
+        if (programId && mainWindow) {
+          mainWindow.webContents.send("program-launched", { programId })
+        }
+        return { success: true }
       }
-      return { success: true }
     } else {
-
-      exec(`"${programPath}"`, (error) => {
+      const childProcess = exec(`"${programPath}"`, { 
+        detached: true, 
+        stdio: "ignore",
+        windowsHide: true
+      }, (error) => {
         if (error) {
           console.error(`Error launching program: ${error}`)
-          return { success: false, error: error.message }
         }
       })
+      childProcess.unref()
+      
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setAlwaysOnTop(false)
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore()
+          }
+          mainWindow.focus()
+        }
+      }, 200)
+      
+      if (programId && mainWindow) {
+        mainWindow.webContents.send("program-launched", { programId })
+      }
       return { success: true }
     }
   } catch (error) {
     console.error(`Exception launching program: ${error}`)
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(false)
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.focus()
+    }
     return { success: false, error: error.message }
   }
 })
@@ -474,6 +699,19 @@ ipcMain.on("create-tray", () => {
   createTray()
 })
 
+ipcMain.on("update-tray-menu", () => {
+  updateTrayMenu()
+})
+
+ipcMain.on("save-programs-data", (event, data) => {
+  try {
+    const programsDataPath = path.join(app.getPath("userData"), "programs.json")
+    fs.writeFileSync(programsDataPath, JSON.stringify(data, null, 2))
+  } catch (error) {
+    console.error("Error saving programs data:", error)
+  }
+})
+
 
 ipcMain.handle("read-image-as-data-url", async (event, filePath) => {
   try {
@@ -501,24 +739,6 @@ ipcMain.handle("read-image-as-data-url", async (event, filePath) => {
   } catch (error) {
     console.error("Error reading image file:", error)
     return null
-  }
-})
-
-
-ipcMain.handle("enable-mini-app", async () => {
-  startGlobalMouseTracking()
-  return { success: true }
-})
-
-ipcMain.handle("disable-mini-app", async () => {
-  stopGlobalMouseTracking()
-  return { success: true }
-})
-
-ipcMain.handle("get-mini-app-status", async () => {
-  return {
-    isTracking: mouseTrackingInterval !== null,
-    isMouseInCorner: isMouseInCorner
   }
 })
 
